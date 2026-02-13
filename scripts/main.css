@@ -1,0 +1,96 @@
+/* Base Styles */
+.font-bangla {
+    font-family: 'Hind Siliguri', sans-serif;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
+@keyframes popup {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-slide-down {
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-popup {
+    animation: popup 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Glassmorphism */
+.glass-panel {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Active Nav State */
+.nav-item.active i,
+.nav-item.active span {
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Arabic Font */
+@font-face {
+    font-family: 'Uthmanic';
+    src: url('https://fonts.gstatic.com/s/amiri/v26/J7aRnpd8CGxBHqUpjnHA.woff2') format('woff2');
+}
+
+.font-arabic {
+    font-family: 'Uthmanic', serif;
+    line-height: 2.4;
+}
+
+/* Checkbox Custom */
+.custom-checkbox:checked {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+/* Compass Styles */
+.compass-dial {
+    background: radial-gradient(circle, #1f2937 60%, #111827 100%);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+.qibla-needle {
+    transition: transform 0.5s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+    transform-origin: center;
+}
+
+/* Toggle Switch */
+.toggle-checkbox:checked {
+    right: 0;
+    border-color: #10b981;
+}
+.toggle-checkbox:checked + .toggle-label {
+    background-color: #10b981;
+}
