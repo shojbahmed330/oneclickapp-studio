@@ -1,1 +1,273 @@
-<div style="background:#09090b; color:#f4f4f5; height:100vh; display:flex; align-items:center; justify-content:center; font-family:sans-serif; text-align:center; padding: 20px;"><h1>OneClick Studio</h1></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Expensify Glass</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+        }
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.25);
+        }
+        body {
+            background: radial-gradient(circle at top right, #3b0764, #0f172a, #000);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
+        .safe-pt { padding-top: env(safe-area-inset-top); }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col">
+
+    <!-- Header -->
+    <header class="safe-pt px-6 py-4 flex justify-between items-center z-10">
+        <div>
+            <p class="text-xs text-white/50 uppercase tracking-widest font-semibold">Monthly Tracker</p>
+            <h1 class="text-2xl font-bold">৳ <span id="totalBalance">0.00</span></h1>
+        </div>
+        <button onclick="window.openBudgetModal()" class="w-10 h-10 glass-btn rounded-full flex items-center justify-center">
+            <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+    </header>
+
+    <!-- Main Content (Scrollable) -->
+    <main class="flex-1 overflow-y-auto px-6 space-y-6 no-scrollbar pb-32">
+        
+        <!-- Analytics Card -->
+        <section class="glass-card p-6 mt-2">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold">Analytics</h2>
+                <span class="text-xs bg-white/10 px-2 py-1 rounded-full">This Month</span>
+            </div>
+            <div class="h-[200px] flex items-center justify-center">
+                <canvas id="analyticsChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="glass-card p-4 flex flex-col items-center justify-center space-y-1">
+                <span class="text-emerald-400 text-[10px] uppercase font-bold tracking-tighter">Spent Today</span>
+                <p class="text-lg font-bold">৳ <span id="todaySpent">0</span></p>
+            </div>
+            <div class="glass-card p-4 flex flex-col items-center justify-center space-y-1">
+                <span class="text-amber-400 text-[10px] uppercase font-bold tracking-tighter">Remaining</span>
+                <p class="text-lg font-bold">৳ <span id="budgetRemaining">0</span></p>
+            </div>
+        </div>
+
+        <!-- Transactions List -->
+        <section>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold">Transactions</h2>
+                <button class="text-white/50 text-xs">View All</button>
+            </div>
+            <div id="transactionList" class="space-y-3">
+                <!-- Rendered JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation & FAB -->
+    <div class="fixed bottom-0 left-0 right-0 p-6 safe-pb">
+        <div class="flex justify-center items-center relative">
+            <button onclick="window.openAddModal()" class="w-14 h-14 bg-white text-black rounded-full shadow-2xl flex items-center justify-center transition-transform active:scale-90">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div id="addModal" class="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-end justify-center hidden">
+        <div class="glass-card w-full max-w-lg p-8 rounded-b-none animate-in slide-in-from-bottom duration-300">
+            <div class="w-12 h-1 bg-white/20 mx-auto rounded-full mb-6"></div>
+            <h3 class="text-xl font-bold mb-6">New Expense</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-white/50 block mb-2">Amount (৳)</label>
+                    <input id="amountInput" type="number" class="w-full bg-white/10 border border-white/10 rounded-xl p-4 text-2xl font-bold focus:outline-none focus:border-white/40" placeholder="0.00">
+                </div>
+                <div>
+                    <label class="text-xs text-white/50 block mb-2">Category</label>
+                    <select id="categoryInput" class="w-full bg-white/10 border border-white/10 rounded-xl p-4 focus:outline-none focus:border-white/40">
+                        <option value="Food">Food</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Health">Health</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="window.closeAddModal()" class="flex-1 p-4 rounded-2xl bg-white/5 font-semibold">Cancel</button>
+                    <button onclick="window.saveExpense()" class="flex-1 p-4 rounded-2xl bg-white text-black font-bold">Add Taka</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartInstance = null;
+        let budget = parseFloat(localStorage.getItem('budget')) || 10000;
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [
+            { id: 1, amount: 250, category: 'Food', date: new Date().toISOString() },
+            { id: 2, amount: 1500, category: 'Shopping', date: new Date().toISOString() }
+        ];
+
+        window.NativeBridge = {
+            vibrate: () => { if (navigator.vibrate) navigator.vibrate(20); }
+        };
+
+        window.openAddModal = () => {
+            window.NativeBridge.vibrate();
+            document.getElementById('addModal').classList.remove('hidden');
+        };
+
+        window.closeAddModal = () => {
+            document.getElementById('addModal').classList.add('hidden');
+        };
+
+        window.openBudgetModal = () => {
+            const val = prompt('Set your monthly budget (৳):', budget);
+            if (val) {
+                budget = parseFloat(val);
+                localStorage.setItem('budget', budget);
+                updateUI();
+            }
+        };
+
+        window.saveExpense = () => {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            const category = document.getElementById('categoryInput').value;
+
+            if (!amount || amount <= 0) return;
+
+            const newExp = {
+                id: Date.now(),
+                amount: amount,
+                category: category,
+                date: new Date().toISOString()
+            };
+
+            transactions.unshift(newExp);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            
+            window.NativeBridge.vibrate();
+            document.getElementById('amountInput').value = '';
+            window.closeAddModal();
+            updateUI();
+        };
+
+        window.deleteExpense = (id) => {
+            transactions = transactions.filter(t => t.id !== id);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            updateUI();
+        };
+
+        function updateUI() {
+            const total = transactions.reduce((sum, t) => sum + t.amount, 0);
+            const today = transactions
+                .filter(t => new Date(t.date).toDateString() === new Date().toDateString())
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            document.getElementById('totalBalance').innerText = total.toLocaleString();
+            document.getElementById('todaySpent').innerText = today.toLocaleString();
+            document.getElementById('budgetRemaining').innerText = (budget - total).toLocaleString();
+
+            renderList();
+            renderChart();
+        }
+
+        function renderList() {
+            const container = document.getElementById('transactionList');
+            container.innerHTML = transactions.slice(0, 5).map(t => `
+                <div class="glass-card p-4 flex items-center justify-between group">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                            <i data-lucide="${getIcon(t.category)}" class="w-5 h-5 opacity-70"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium">${t.category}</p>
+                            <p class="text-xs text-white/40">${new Date(t.date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <p class="font-bold">-৳${t.amount}</p>
+                        <button onclick="window.deleteExpense(${t.id})" class="opacity-0 group-hover:opacity-100 text-red-400 p-1 transition-opacity">
+                             <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function getIcon(cat) {
+            switch(cat) {
+                case 'Food': return 'coffee';
+                case 'Shopping': return 'shopping-bag';
+                case 'Bills': return 'credit-card';
+                case 'Health': return 'activity';
+                default: return 'arrow-right';
+            }
+        }
+
+        function renderChart() {
+            const categories = ['Food', 'Travel', 'Shopping', 'Bills', 'Health'];
+            const data = categories.map(cat => 
+                transactions.filter(t => t.category === cat).reduce((sum, t) => sum + t.amount, 0)
+            );
+
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#60a5fa', '#f87171', '#34d399', '#fbbf24', '#a78bfa'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateUI();
+        });
+    </script>
+</body>
+</html>
